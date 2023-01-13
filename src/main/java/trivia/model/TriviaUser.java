@@ -1,4 +1,4 @@
-package trivia;
+package trivia.model;
 
 import java.util.Objects;
 
@@ -8,12 +8,15 @@ public class TriviaUser {
 
     private int result;
 
-    public TriviaUser(String name) {
+    public static TriviaUser newInstance(String name){
+        return new TriviaUser(name);
+    }
+    private TriviaUser(String name) {
         this.name = name;
         this.result = 0;
     }
 
-    public void increaseResult(){
+    public void increaseResult() {
         this.result += 1;
     }
 
@@ -35,7 +38,7 @@ public class TriviaUser {
 
     @Override
     public String toString() {
-        return name + ";" + result;
+        return name + "- Score" + result;
 
     }
 

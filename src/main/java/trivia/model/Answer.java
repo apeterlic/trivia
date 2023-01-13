@@ -9,7 +9,6 @@ public class Answer implements Serializable {
     private String choice;
 
 
-
     public String getText() {
         return text;
     }

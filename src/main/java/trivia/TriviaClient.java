@@ -1,5 +1,7 @@
 package trivia;
 
+import trivia.model.TriviaUser;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
@@ -20,22 +22,31 @@ public class TriviaClient {
 
     public TriviaClient(final String serverAddress) {
         this.serverAddress = serverAddress;
-        txtArea.setEnabled(false);
+        txtChat.setEnabled(false);
+        JScrollPane scrollPane = new JScrollPane(txtArea);   // JTextArea is placed in a JScrollPane.
+
         frame.getContentPane().add(txtChat, BorderLayout.SOUTH);
-        frame.getContentPane().add(txtArea, BorderLayout.CENTER);
+        //frame.getContentPane().add(txtArea, BorderLayout.CENTER);
+        frame.getContentPane().add(scrollPane);
         frame.pack();
 
         txtChat.addActionListener(e -> {
-            out.println("ANSWER" + txtChat.getText()); // send the answer to the server
-            txtArea.append(txtChat.getText());
-            out.println("NAME" + triviaUser.getName()); // send the name to the server
+            out.println("ANSWER" + txtChat.getText() + ";NAME" + triviaUser.getName()); // send the answer to the server
+            txtArea.append(txtChat.getText() + "\n");
+            //out.println("NAME" + triviaUser.getName()); // send the name to the server
             txtChat.setText("");
         });
     }
 
+    public static void main(String[] args) throws IOException {
+        TriviaClient triviaClient = new TriviaClient("127.0.0.1");
+        triviaClient.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        triviaClient.frame.setVisible(true);
+        triviaClient.run();
+    }
 
     private String getIme() {
-        return JOptionPane.showInputDialog(frame, "Odaberite ime", "Odabir imena", JOptionPane.PLAIN_MESSAGE);
+        return JOptionPane.showInputDialog(frame, "Your Name", "Enter Name", JOptionPane.PLAIN_MESSAGE);
     }
 
     private void run() throws IOException {
@@ -47,40 +58,35 @@ public class TriviaClient {
             while (in.hasNextLine()) {
                 String line = in.nextLine();
                 if (line.startsWith("SEND.NAME")) {
-                    String ime = getIme(); // enter username
-                    triviaUser = new TriviaUser(ime); // create TriviaUser
-                    out.println(ime); // send username to the server
+                    String name = getIme(); // enter username
+                    triviaUser = TriviaUser.newInstance(name); // create TriviaUser
+                    out.println(name); // send username to the server
                 } else if (line.startsWith("NAME.ACCEPTED")) {
-                    this.frame.setTitle("Trivia - " + line.substring(14));
-                } else if (line.startsWith("Poruka")) {
-                    txtArea.append(line.substring(6) + "\n");
+                    this.frame.setTitle("Trivia - " + line.substring(13));
+                } else if (line.startsWith("INFO")) {
+                    txtArea.append(line.substring(4) + "\n");
                 } else if (line.startsWith("Q.START")) {
                     txtArea.append(in.nextLine() + "\n"); // pitanje
                     txtArea.append(in.nextLine() + "\n"); // odg1
                     txtArea.append(in.nextLine() + "\n"); // odg2
                     txtArea.append(in.nextLine() + "\n"); // odg3
                 } else if (line.startsWith("GAME.START")) {
-                    txtArea.setEnabled(true);
-                    txtArea.append("START" + "\n" + "\n");
+                    txtChat.setEnabled(true);
+                    txtArea.append("GAME STARTED!" + "\n");
                 } else if (line.startsWith("ERROR.CHOICE")) {
-                    txtArea.append("Molim unestie ispravnu vrijednost (ili 0 za kraj)");
+                    txtArea.append("Please select correct answer (or 0 to end the game)" + "\n");
+                } else if (line.startsWith("GAME.WAIT")) {
+                    txtArea.append("Waiting for others to join. " + "\n");
                 } else if (line.startsWith("THE.END")) {
                     txtArea.append("Game ended." + "\n");
-                    while (in.hasNextLine()) {
-                        txtArea.append(in.nextLine() + "\n");
-                    }
+                } else if (line.startsWith("GAME.FINISHED")) {
+                    txtArea.append("Game result." + "\n");
+                    txtArea.append(line.substring(13) + "\n");
                 }
             }
         } finally {
             frame.setVisible(false);
             frame.dispose();
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        TriviaClient triviaClient = new TriviaClient("127.0.0.1");
-        triviaClient.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        triviaClient.frame.setVisible(true);
-        triviaClient.run();
     }
 }
